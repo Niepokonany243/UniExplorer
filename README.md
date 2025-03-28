@@ -1,4 +1,4 @@
-# UniExplorer Ultra
+# UniExplorer
 
 Explore all Unicode characters in a fast, single-file web app.
 
