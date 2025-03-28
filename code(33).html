@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UniExplorer Ultra</title>
+<style>
+:root { --bg: #111; --fg: #eee; --prime: #0af; --prime-t: rgba(0, 170, 255, 0.1); --card: #222; --card-h: #333; --shadow: rgba(0, 170, 255, 0.15); --scroll: #444; --scroll-h: #666; --modal-bg: rgba(10, 10, 10, 0.85); --btn-bg: #333; --btn-h: #444; --btn-a: var(--prime); }
+html[data-theme='light'] { --bg: #f0f2f5; --fg: #333; --prime: #07a; --prime-t: rgba(0, 119, 170, 0.1); --card: #fff; --card-h: #eee; --shadow: rgba(0, 119, 170, 0.1); --scroll: #ccc; --scroll-h: #aaa; --modal-bg: rgba(255, 255, 255, 0.85); --btn-bg: #e0e0e0; --btn-h: #d0d0d0; --btn-a: var(--prime); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: var(--bg); color: var(--fg); line-height: 1.6; overflow-x: hidden; transition: background-color .3s, color .3s; font-size: 16px; }
+#app { display: flex; flex-direction: column; min-height: 100vh; padding: 1rem .8rem; }
+header { display: flex; flex-direction: column; margin-bottom: 1rem; gap: .8rem; }
+.h_top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+h1 { font-size: 1.5rem; color: var(--prime); user-select: none; }
+#s { flex-grow: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--card-h); border-radius: 20px; background-color: var(--card); color: var(--fg); font-size: 0.9rem; min-width: 150px; outline: none; transition: border-color .3s, box-shadow .3s; }
+#s:focus { border-color: var(--prime); box-shadow: 0 0 0 3px var(--prime-t); }
+#th { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--fg); padding: 0.2rem; line-height: 1; }
+#cats { display: flex; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--card-h); padding-bottom: .8rem; max-width: 100%; overflow-x: auto; }
+.cb { padding: 0.4rem 0.8rem; background-color: var(--btn-bg); color: var(--fg); border: none; border-radius: 15px; cursor: pointer; font-size: 0.75rem; transition: background-color .2s, color .2s; white-space: nowrap; flex-shrink: 0; }
+.cb:hover { background-color: var(--btn-h); }
+.cb.a { background-color: var(--btn-a); color: #fff; font-weight: bold; }
+main { flex-grow: 1; margin-bottom: 1rem; }
+#g, #f { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 0.75rem; }
+.c { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--card); border-radius: 8px; aspect-ratio: 1 / 1; cursor: pointer; transition: background-color .2s, transform .2s, box-shadow .2s; font-size: 1.8rem; position: relative; overflow: hidden; border: 1px solid transparent; user-select: none; }
+.c:hover { background-color: var(--card-h); transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow); border-color: var(--prime); }
+.c span { font-size: 0.6rem; color: var(--fg); opacity: 0.6; position: absolute; bottom: 2px; left: 4px; font-family: monospace; pointer-events: none; line-height: 1.1; }
+.c button { position: absolute; top: 2px; right: 2px; background: none; border: none; color: var(--fg); opacity: 0.2; cursor: pointer; font-size: 0.7rem; padding: 1px 3px; z-index: 1; transition: opacity .2s; }
+.c:hover button { opacity: 0.6; }
+.c button:hover { opacity: 1; color: var(--prime); }
+#f { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--card-h); }
+#f h2 { grid-column: 1 / -1; font-size: 1rem; margin-bottom: 0.5rem; color: var(--prime); }
+#f:empty::before { content: '⭐ Favorite characters appear here. Click the + on any character.'; grid-column: 1 / -1; color: var(--fg); opacity: 0.6; text-align: center; padding: 1rem; }
+#m { position: fixed; inset: 0; background-color: var(--modal-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; z-index: 100; padding: 1rem; }
+#m.v { opacity: 1; visibility: visible; }
+#mc { background-color: var(--card); padding: 2rem; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+#mcc { font-size: 5rem; margin-bottom: 1rem; line-height: 1; word-break: break-all; }
+#mcd { font-family: monospace; margin-bottom: .5rem; color: var(--fg); opacity: 0.8; font-size:.9rem; }
+#mcn { font-size: 0.8rem; color: var(--fg); opacity: 0.6; margin-bottom: 1.5rem; min-height: 1.2em; }
+#mcb { padding: 0.7rem 1.5rem; background-color: var(--prime); color: #fff; border: none; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: background-color .2s; margin-top: 0.5rem; }
+#mcb:hover { filter: brightness(1.1); }
+#mcl { position: absolute; top: 0.8rem; right: 0.8rem; background: none; border: none; font-size: 1.5rem; color: var(--fg); opacity: 0.6; cursor: pointer; line-height: 1; }
+#mcl:hover { opacity: 1; }
+#l { text-align: center; padding: 2rem; color: var(--fg); opacity: 0.7; }
+#l.e { color: #f55; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-h); }
+@media (max-width: 600px) {
+body { font-size: 15px; }
+h1 { font-size: 1.3rem; }
+#g, #f { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 0.5rem; }
+.c { font-size: 1.5rem; border-radius: 6px; }
+#mcc { font-size: 3.5rem; }
+#app { padding: 0.5rem; }
+header { margin-bottom: 0.5rem; }
+#cats { padding-bottom: 0.5rem; }
+.cb { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+}
+</style>
+</head>
+<body data-theme="dark">
+<div id="app">
+<header>
+<div class="h_top">
+<h1>UniExplorer Ultra</h1>
+<input type="search" id="s" placeholder="Search code, char, name...">
+<button id="th" title="Toggle Theme">🌓</button>
+</div>
+<div id="cats"></div>
+</header>
+<main>
+<div id="f"></div>
+<div id="g"></div>
+<div id="l">Loading...</div>
+</main>
+</div>
+<div id="m"><div id="mc">
+<button id="mcl">&times;</button>
+<div id="mcc"></div>
+<div id="mcd"></div>
+<div id="mcn">Loading name...</div>
+<button id="mcb">Copy Character</button>
+</div></div>
+<script>
+const d=document; const g=d.getElementById('g'); const s=d.getElementById('s'); const f=d.getElementById('f'); const m=d.getElementById('m'); const mcc=d.getElementById('mcc'); const mcd=d.getElementById('mcd'); const mcn=d.getElementById('mcn'); const mcb=d.getElementById('mcb'); const mcl=d.getElementById('mcl'); const l=d.getElementById('l'); const th=d.getElementById('th'); const cs=d.getElementById('cats'); const bs=512; const maxCP=0x10FFFF; let cp=0; let favs=new Set(JSON.parse(localStorage.getItem('f')||'[]')); let sr=''; let ac=null; let io; let ld=false; let nmC={}; let nmTO;
+const CFG={ // Categories - meticulously reviewed & expanded based on requests
+'Symbols':[ // General symbols, Zodiac, Chess, Cards, Weather, UI, Punctuation, Dingbats etc.
+9760,9761,9762,9763,9764,9765,9766,9767,9768,9769,9770,9771,9772,9773,9774,9775, // Religion/Culture/Politics
+9776,9777,9778,9779,9780,9781,9782,9783, // Zodiac
+9784,9785,9786,9787,9788,9789,9790,9791,9792,9793,9794,9795,9796,9797,9798,9799,9800,9801,9802,9803,9804,9805,9806,9807,9808,9809,9810,9811, // More Zodiac/Gender/Planets
+9812,9813,9814,9815,9816,9817, // Chess
+9818,9819,9820,9821,9822,9823, // Chess black
+9824,9825,9826,9827, // Cards Spades/Hearts
+9828,9829,9830,9831, // Cards Diamonds/Clubs
+9832,9833, // Music notes
+9834,9835,9836,9837,9838,9839, // Music more
+9840,9841,9842,9843,9844,9845,9846,9847,9848,9849,9850,9851,9852,9853,9854,9855, // Dice/Misc Symbols
+9856,9857,9858,9859,9860,9861, // Go markers
+9872,9873,9874,9875,9876,9877,9878,9879,9880,9881,9882,9883,9884,9885,9886,9887,9888,9889,9890,9891,9892,9893,9894,9895,9896,9897,9898,9899, // More misc symbols, weather, UI
+9984,9985,9986,9987,9988,9989,9990,9991,9992,9993, // Communication, Tools
+9996,9997,9998,9999,10000,10001,10002,10003,10004,10005,10006,10007,10008, // Checks, Crosses
+10009,10010,10011,10012,10013,10014,10015,10016,10017, // Crosses, Stars
+10018,10019,10020,10021,10022,10023,10024,10025,10026,10027,10028,10029,10030, // Stars, Flowers
+10031,10032,10033,10034,10035,10036,10037,10038,10039,10040,10041,10042,10043,10044,10045,10046,10047,10048,10049,10050,10051,10052,10053,10054,10055,10056,10057,10058,10059, // Snowflakes, Misc Dingbats
+10060,10061,10062,10063,10064,10065,10066,10067,10068,10069,10070, // Negative circled crosses etc
+10071,10072,10073,10074,10075,10076,10077,10078, // Hearts, Quotes
+10079,10080,10081,10082,10083,10084,10085,10086,10087, // Quotes, Hearts
+11805, // Hangul single dot tone mark
+10088,10089,10090,10091,10092,10093,10094,10095,10096,10097,10098,10099,10100,10101, // Dingbat brackets/quotes
+{s:12951,e:12960}, // Additional symbols (Yin Yang etc)
+9733,9734, // Stars ★ ☆
+9735,9736,9737, // Comet, suns
+9738,9739,9740,9741, // Cloud, umbrella, snowman
+9742,9743, // Phone
+9748,9749, // Coffee, shamrock
+9754,9755,9756,9757,9758,9759, // Hands
+9994,9995, // Fist, Hand
+9996, // Victory hand
+11088, // Star
+11093, // Crescent moon
+127774,127775, // Sun, Moon faces
+128701, // ⚗ Alembic
+128588, // 〠 Wavy Dash
+4359, // ᴥ Aegean Word Separator Line
+10048, // ✺ Sixteen Pointed Asterisk
+8226, // Bullet
+169,174,8482, // © ® ™
+35,38,64, // # & @
+162,163,164,165,8364, // ¢ £ ¤ ¥ €
+8505 // Alef symbol ℵ
+],
+'Math':[ // Full Math Operators & Supplemental Blocks + More
+{s:0x2200,e:0x22FF}, // Mathematical Operators
+{s:0x2A00,e:0x2AFF}, // Supplemental Mathematical Operators
+{s:0x27C0,e:0x27EF}, // Misc Math Symbols-A
+{s:0x2980,e:0x29FF}, // Misc Math Symbols-B
+{s:10175,e:10239}, // Mathematical Alphanumeric Symbols (Partial Range, Full range below)
+8704,8705,8706,8707,8708,8709,8710,8711,8712,8713,8714,8715,8716,8717,8718,8719,8720,8721,8722,8723,8724,8725,8726,8727,8728,8729,8730,8731,8732,8733,8734,8735,8736,8737,8738,8739,8740,8741,8742,8743,8744,8745,8746,8747,8748,8749,8750,8751,8752,8753,8754,8755,8756,8757,8758,8759,8760,8761,8762,8763,8764,8765,8766,8767,8768,8769,8770,8771,8772,8773,8774,8775,8776,8777,8778,8779,8780,8781,8782,8783,8784,8785,8786,8787,8788,8789,8790,8791,8792,8793,8794,8795,8796,8797,8798,8799,8800,8801,8802,8803,8804,8805,8806,8807,8808,8809,8810,8811,8812,8813,8814,8815,8816,8817,8818,8819,8820,8821,8822,8823,8824,8825,8826,8827,8828,8829,8830,8831,8832,8833,8834,8835,8836,8837,8838,8839,8840,8841,8842,8843,8844,8845,8846,8847,8848,8849,8850,8851,8852,8853,8854,8855,8856,8857,8858,8859,8860,8861,8862,8863,8864,8865,8866,8867,8868,8869,8870,8871,8872,8873,8874,8875,8876,8877,8878,8879,8880,8881,8882,8883,8884,8885,8886,8887,8888,8889,8890,8891,8892,8893,8894,8895,8896,8897,8898,8899,8900,8901,8902,8903,8904,8905,8906,8907,8908,8909,8910,8911,8912,8913,8914,8915,8916,8917,8918,8919,8920,8921,8922,8923,8924,8925,8926,8927,8928,8929,8930,8931,8932,8933,8934,8935,8936,8937,8938,8939,8940,8941,8942,8943,8944,8945,8946,8947,8948,8949,8950,8951,8952,8953,8954,8955,8956,8957,8958,8959,8960,8961,8962,8963,8964,8965,8966,8967,8968,8969,8970,8971,8972,8973,8974,8975,8976,8977,8978,8979,8980,8981,8982,8983,8984,8985,8986,8987,8988,8989,8990,8991,8992,8993,8994,8995,8996,8997,8998,8999,9000,9001,9002,9003,9004,9005,9006,9007,9008,9009,9010,9011,9012,9013,9014,9015,9016,9017,9018,9019,9020,9021,9022,9023,9024,9025,9026,9027,9028,9029,9030,9031,9032,9033,9034,9035,9036,9037,9038,9039,9040,9041,9042,9043,9044,9045,9046,9047,9048,9049,9050,9051,9052,9053,9054,9055,9056,9057,9058,9059,9060,9061,9062,9063,9064,9065,9066,9067,9068,9069,9070,9071,9072,9073,9074,9075,9076,9077,9078,9079,9080,9081,9082,9083,9084,9085,9086,9087,9088,9089,9090,9091,9092,9093,9094,9095,9096,9097,9098,9099,9100,9101,9102,9103,9104,9105,9106,9107,9108,9109,9110,9111,9112,9113,9114,9115,9116,9117,9118,9119,9120,9121,9122,9123,9124,9125,9126,9127,9128,9129,9130,9131,9132,9133,9134,9135,9136,9137,9138,9139,9140,9141,9142,9143,9144,9145,9146,9147,9148,9149,9150,9151,9152,9153,9154,9155,9156,9157,9158,9159,9160,9161,9162,9163,9164,9165,9166,9167,9168,9169,9170,9171,9172,9173,9174,9175,9176,9177,9178,9179,9180,9181,9182,9183,9184,9185,9186,9187,9188,9189,9190,9191,9192,9193,9194,9195,9196,9197,9198,9199,9200,9201,9202,9203,9204,9205,9206,9207,9208,9209,9210,9211,9212,9213,9214,9215,9216,9217,9218,9219,9220,9221,9222,9223,9224,9225,9226,9227,9228,9229,9230,9231,9232,9233,9234,9235,9236,9237,9238,9239,9240,9241,9242,9243,9244,9245,9246,9247,9248,9249,9250,9251,9252,9253,9254,9255,9256,9257,9258,9259,9260,9261,9262,9263,9264,9265,9266,9267,9268,9269,9270,9271,9272,9273,9274,9275,9276,9277,9278,9279,9280,9281,9282,9283,9284,9285,9286,9287,9288,9289,9290,9291,9292,9293,9294,9295,9296,9297,9298,9299,9300,9301,9302,9303,9304,9305,9306,9307,9308,9309,9310,9311,
+8784, // ∰ Volume Integral
+171,187, // « »
+8249,8250, // ‹ ›
+188,190, // , .
+58,59, // : ;
+63,33, // ? !
+191,161, // ¿ ¡
+47,92, // / \
+124, // |
+172, // ¬
+43,45, // + -
+177, // ±
+215,247, // × ÷
+60,61,62, // < = >
+8804,8805, // ≤ ≥
+8800,8801, // ≠ ≈
+8773,8776, // ≅ ≈
+8733,8734, // ∝ ∞
+8736, // ∠
+8741, // ∥
+8743,8744, // ∧ ∨
+8745,8746, // ∩ ∪
+8747, // ∫
+8756,8757, // ∴ ∵
+8764, // ∼
+8706, // ∂
+8711, // ∇
+8719, // Π
+8721, // Σ
+8730, // √
+8962,8963,8964,8965, // Angles
+8968,8969,8970,8971, // Ceiling/Floor
+8240, // ‰ Per Mille
+8241, // ‱ Per Ten Thousand
+{s:119808, e:120831}, // Mathematical Alphanumeric Symbols (Full)
+{s:8528,e:8591} // Number Forms, Arrows (Partial overlap, okay)
+],
+'SubSup':[ // Subscript and Superscript characters
+{s:8304,e:8309},{s:170,e:186},{s:8310,e:8313},{s:7424,e:7451}, // Superscripts 0-9, a, o, n, etc.
+{s:8336,e:8348}, // Superscript +, -, =, (, )
+{s:8320,e:8335}, // Subscripts 0-9, +, -, =, (, )
+{s:7584,e:7615}, // Subscript letters
+{s:8349,e:8349} // Subscript x
+],
+'Arrows':[ // All arrow blocks
+{s:0x2190,e:0x21FF},{s:0x27F0,e:0x27FF},{s:0x2900,e:0x297F},{s:0x2B00,e:0x2BFF},{s:11008,e:11023},{s:129024, e:129183},{s:65040, e:65047}],
+'Box':[ // Full Box Drawing, Block Elements, Shades
+{s:0x2500,e:0x257F}, // Box Drawing
+{s:9532,e:9549}, // More Box Drawing
+{s:9552,e:9580}, // Curved Box Drawing
+{s:9581,e:9615}, // Heavy/Light mix Box Drawing
+{s:9617, e:9619}, // Shades
+{s:9600,e:9631}, // Block Elements
+9632,9633,9634,9635,9636,9637,9638,9639,9640,9641, // Squares/Rectangles
+9642,9643, // Diamonds
+9644,9645,9646,9647,9648,9649,9650,9651,9652,9653, // Triangles
+9654,9655,9656,9657,9658,9659,9660,9661,9662,9663, // More Triangles
+9664,9665,9666,9667, // Pointers
+9668,9669, // Filled Pointers
+9670,9671,9672,9673, // Diamond, lozenge
+9674,9675, // White/Black circle
+9676,9677,9678,9679, // Circles with quadrant
+9680,9681,9682,9683,9684,9685, // Circle with vertical fill etc (Kaomoji eyes)
+9686,9687,9688,9689,9690,9691, // Arcs
+9692,9693,9694,9695,9696,9697, // Squares with quadrant
+9702,9703,9704,9705,9706,9707,9708,9709,9710,9711, // Geometric shapes misc
+{s:11040, e:11055}, // Geometric Shapes Extended
+{s:129008, e:129023}, // Geometric Shapes Extended-B
+9501, 9509, 9517, 9525, 9533, 9541, // Used in text art
+9553, 9561, 9569, 9577, // Double lines
+9487, 9491, 9495, 9499, // Corners
+9511, 9519, 9527, 9535, // T-junctions
+9543, 9547, 9548, 9549, // Crossings
+9550, 9551, // Double horizontal/vertical
+9580, // Double crossing
+9587, // Heavy Horizontal
+9588, 9589, 9590, 9591, // Light Arc
+9592, 9593, 9594, 9595, // Heavy Arc
+9596, 9597, // Light Diagonal
+9598, 9599, 9600, // Heavy Diagonal
+9622, 9623, 9624, 9625, 9626, 9627, 9628, 9629, 9630, 9631, // Quadrants
+9472,9474, // Light Horizontal/Vertical
+9484,9488,9492,9496, // Light Corners
+9500,9508,9516,9524, // Light T-junctions
+9532, // Light Cross
+11811 // ⸻ Em dash x 3 (Requested example)
+],
+'Braille':[{s:0x2800,e:0x28FF}], // Full Braille block for text art
+'Combining (Zalgo)':[{s:0x300,e:0x36F},{s:0x1DC0,e:0x1DFF},{s:0x20D0,e:0x20FF},{s:0xFE20,e:0xFE2F}, 8400,8401,8402,8403,8404,8405,8406,8407,8408,8409,8410,8411,8412,8413,8414,8415,8416,8417,8418, 8398, 8399, 8421, 8422, 8423, 8424, 8425, 8426, 8427, 8428, 8429, 8430, 8431, 8432, 8433, 8434, 8435, 8436, 8437, 8438, 8439, 8440, 8441, 8442, 8443, 8444, 8445, 8446, 8447, 8420, // Combining numbers/symbols
+8419, // Combining asterisk
+8421, // Combining double ring below
+8422, // Combining equals sign below
+8423, // Combining double vertical line below
+8433, // Combining long slash overlay
+8434, // Combining short slash overlay
+8435, // Combining long stroke overlay
+8436, // Combining short stroke overlay
+8437, // Combining Anticipated breve
+8438, // Combining Anticipated double breve
+8444, // Combining upwards arrow below
+8445, // Combining triple underdot
+8446, // Combining x below
+8447, // Combining double ring overlay
+8398, // Combining Grapheme Joiner
+8399, // Combining Right Arrowhead Below
+8400, // Combining Left Arrowhead Below
+8401, // Combining Left Arrowhead Above
+8402, // Combining Right Arrowhead Above
+8403, // Combining Left Half Ring Above
+8404, // Combining Right Half Ring Above
+8405, // Combining Dot Above Right
+8406, // Combining Asterisk Below
+8407, // Combining Double Vertical Stroke Below
+8408, // Combining Zigzag Below
+8409, // Combining Double Breve Below
+8410, // Combining Double Breve
+8411, // Combining Double Macron
+8412, // Combining Double Macron Below
+8413, // Combining Double Tilde
+8414, // Combining Double Inverted Breve
+8415, // Combining Double Rightwards Arrow Below
+8416, // Combining Leftwards Arrow Overlay
+8417, // Combining Square Below
+8418, // Combining Seagull Below
+8419, // Combining X Above
+8420, // Combining Vertical Tilde
+8421, // Combining Double Ring Below
+8422, // Combining Equals Sign Below
+8423, // Combining Double Vertical Line Below
+8424, // Combining Left Angle Above
+8425, // Combining Right Angle Above
+8426, // Combining Dot Above Left
+8427, // Combining Left Bridge Below
+8428, // Combining Right Bridge Below
+8429, // Combining Left Square Bracket Below
+8430, // Combining Right Square Bracket Below
+8431, // Combining Seagull Above
+8432, // Combining Almost Equal To Above
+8433, // Combining Long Slash Overlay
+8434, // Combining Short Slash Overlay
+8435, // Combining Long Stroke Overlay
+8436, // Combining Short Stroke Overlay
+8437, // Combining Anticipated Breve
+8438, // Combining Anticipated Double Breve
+8439, // Combining Upwards Arrow Below
+8440, // Combining Grapheme Joiner
+8441, // Combining Right Arrowhead And Up Arrowhead Below
+8442, // Combining Right Half Ring Below
+8443, // Combining Rotated Tilde Below
+8444, // Combining Flower Below
+8445, // Combining Triple Underdot
+8446, // Combining X Below
+8447, // Combining Double Ring Overlay
+8298, 8299, 8300, 8301, 8302, 8303, // Combining Diacritics Supplement
+{s:767,e:879}, // More Combining Marks
+8400, // Combining Left Arrowhead Below (example)
+8401, // Combining Right Arrowhead Above (example)
+8421, // Combining Double Ring Below (example)
+8434, // Combining Short Slash Overlay (example)
+8446, // Combining X Below (example)
+8417, // Combining Square Below (example)
+8428, // Combining Right Bridge Below (example)
+8433, // Combining Long Slash Overlay (example)
+8409, // Combining Zigzag Below (example)
+8412, // Combining Double Macron Below (example)
+8415, // Combining Double Rightwards Arrow Below (example)
+8205, // Zero Width Joiner (Used in Emoji sequences)
+8417, // Combining Square Below
+8418 // Combining Seagull Below
+],
+'Circled':[ // Numbers, Letters (Circled, Parenthesized, etc.)
+{s:9312,e:9331},{s:9332,e:9351},{s:9352,e:9371}, // Circled/Paren Latin
+{s:12881,e:12895},{s:12992,e:13007}, // Circled/Negative Circled Numbers > 20
+{s:12736,e:12751},{s:12752,e:12767}, // Circled Katakana/Ideographs
+{s:9461,e:9471}, // Parenthesized Latin Lowercase
+{s:9372,e:9397}, // Circled Latin Uppercase/Lowercase
+{s:12720, e:12745}, // Negative Circled Latin
+{s:9450, e:9450}, // Circled zero
+{s:10102, e:10111}, // Dingbat Negative Circled Numbers 1-10
+{s:10112, e:10121}, // Dingbat Circled Sans-Serif Numbers 1-10
+{s:10122, e:10131}, // Dingbat Negative Circled Sans-Serif Numbers 1-10
+{s:10132, e:10132} // Heavy Circled Digit Zero
+],
+'Letterlike':[ // Letterlike Symbols, Phonetic, Currency
+{s:8448,e:8527}, // Letterlike symbols (℃ ℉ № ™ ℠ ℡ etc) + Number forms
+{s:8352,e:8383}, // Currency Symbols
+{s:913,e:937},{s:945,e:969}, // Greek letters (Alpha-Omega, alpha-omega)
+{s:4352,e:4607}, // Phonetic Extensions & Supplement
+{s:7424,e:7679}, // Spacing Modifier Letters, Phonetic Extensions Supplement
+{s:7808,e:7935}, // Latin Extended-C
+{s:8528,e:8543}, // Number Forms (Roman numerals etc)
+{s:970,e:974}, // More Greek
+962,960, // Greek sigma, pi
+8472, // ℙ Double-struck P
+8476, // ℚ Double-struck Q
+8477, // ℝ Double-struck R
+8484, // ℤ Double-struck Z
+8488, // ℈ Scruple
+8491, // ℋ Script H (Hamiltonian)
+8492, // ℌ Black-letter H
+8493, // ℍ Double-struck H
+8496, // ℎ Planck constant
+8497, // ℏ Planck constant over 2 pi
+8499, // ℻ Turned R
+8500, // ℼ Double-struck pi
+8501, // ℽ Double-struck gamma
+8502, // ℾ Double-struck Gamma
+8503, // ℿ Double-struck Pi
+8504, // ℾ Double-struck Summation
+8505, // ℵ Alef symbol
+8506, // ℶ Bet symbol
+8507, // ℷ Gimel symbol
+8508, // ℸ Dalet symbol
+8509, // ℹ Information Source
+8510, // ℺ Rotated Q
+8511, // ℻ Turned R without serifs
+8512, // ℼ Double-struck pi small
+8513, // ℽ Double-struck gamma small
+8514, // ℾ Double-struck Gamma small
+8515, // ℿ Double-struck Pi small
+8516, // ⅀ Double-struck Summation small
+8517, // ⅁ Turned Sans-Serif Capital G
+8518, // ⅂ Turned Sans-Serif Capital L
+8519, // ⅃ Reversed Sans-Serif Capital L
+8520, // ⅄ Turned Sans-Serif Capital Y
+8521, // ⅅ Double-struck italic d
+8522, // ⅆ Double-struck italic d
+8523, // ⅇ Double-struck italic e
+8524, // ⅈ Double-struck italic i
+8525, // ⅉ Double-struck italic j
+8526, // ⅊ Property line
+8527, // ⅋ Turned ampersand
+452, // Ǆ (Requested Example)
+{s:66304, e:66351}, // Nushu
+{s:67584, e:67647} // Latin Extended-F
+],
+'Kaomoji':[ // Expanded list of common components for (๑˃̵ᴗ˂̵)ﻭ, ¯\_(ツ)_/¯, (づ｡◕‿‿◕｡)づ etc.
+// Eyes (Examples)
+968,969, // ο υ Greek Small Letters Omicron, Upsilon
+9676,9677,9678,9679, // Geometric Shapes (Quadrant Circles)
+9680,9681,9682,9683,9684,9685, // Geometric Shapes (Circles with fill, bullseye)
+183, // Middle Dot
+8226, // Bullet
+12539, // Katakana Middle Dot
+65344, // Fullwidth Period
+65377, // Fullwidth Less-Than Sign
+65378, // Fullwidth Greater-Than Sign
+65381, // Fullwidth Tilde
+9673, // Diamond
+9670, // Black Diamond
+9678, // White Diamond Containing Black Small Diamond
+9671, // White Diamond
+9679, // Black Circle
+9675, // White Circle
+9672, // White Circle with Upper Right Quadrant
+// Mouths (Examples)
+9661, // White Down-Pointing Triangle
+9663, // White Up-Pointing Triangle
+9662, // Black Down-Pointing Triangle
+9660, // Black Up-Pointing Triangle
+8255, // Hyphenation Point
+8256, // Non-Breaking Hyphen
+8711, // Nabla (Triangle)
+9698,9699, // Triangle Lower/Upper Half
+8728, // Ring Operator
+8729, // Bullet Operator
+8730, // Square Root
+9633, // White Square
+9632, // Black Square
+9642, // Black Small Square
+9643, // White Small Square
+// Arms / Hands (Examples)
+40,41,91,93,123,125,60,62,47,92,124, // Brackets, Slashes
+65340,65341, // Fullwidth brackets
+65371,65372,65373,65374, // Fullwidth braces/bar
+65382,65438, // Halfwidth Katakana Wo, backslash
+9484,9488,9492,9496, // Box Drawing Corners
+9585,9586, // Box Drawing Light Diagonal
+65077,65078, // Halfwidth Brackets
+// Cheeks / Embellishments (Examples)
+176, // Degree Sign
+180, // Acute Accent
+191,161, // ¿ ¡
+10047, // Sparkling Heart
+10048, // Heavy Sparkling Heart
+10024, // Sparkle
+10034, // White Star
+10035, // Black Star
+10036, // Star Outline
+10038, // Heavy Star Outline
+10039, // Heavy Teardrop-Spoked Asterisk
+10042, // Heavy Four Balloon-Spoked Asterisk
+10043, // Four Teardrop-Spoked Asterisk
+10059, // Heavy Asterisk
+10049, // Flower Outline
+10050, // Black Four Pointed Star
+10051, // White Four Pointed Star
+10057, // Rotated Heavy Black Heart Bullet
+10058, // Scaled Down Version of Heavy Black Heart Bullet
+42, // Asterisk
+65290, // Fullwidth Asterisk
+// Other Common Characters
+94, // Caret (Hat)
+95, // Underscore
+61, // Equals
+43, // Plus
+45, // Hyphen-Minus
+65291, // Fullwidth Plus Sign
+65293, // Fullwidth Hyphen-Minus
+65309, // Fullwidth Equals Sign
+59, // Semicolon
+65307, // Fullwidth Semicolon
+39, // Apostrophe
+96, // Grave Accent
+168, // Diaeresis
+175, // Macron
+// Many characters from 'Symbols', 'Box', 'Letterlike' are also used
+// Specific Requested/Similar
+3964, 3965, // ༼ ༽ Tibetan Parentheses (Requested)
+3790, // ༎ Tibetan Double Mark (Requested)
+3766, // ຶ Lao Vowel Sign I (Requested)
+1757, // ۝ Arabic End of Ayah (Requested)
+9792, 9794, // ♀ ♂ Gender Symbols
+9829, 10084, // ♥ ❤ Hearts
+9786, 9787, 9785, // ☺ ☻ ☹ Faces
+3665, 3666, // Thai Currency Symbols (Baht)
+65106,65107, // Arabic Ligatures
+12540,12541,12542, // Katakana-Hiragana Voiced Sound Mark / Semi-voiced Sound Mark / Iteration Mark
+{s:12449,e:12534}, // Katakana
+{s:12353,e:12438}, // Hiragana
+{s:65382,e:65439}, // Halfwidth Katakana/Fullwidth Variants
+{s:65281,e:65374}, // Fullwidth ASCII Variants
+{s:12289,e:12319}, // CJK Symbols and Punctuation
+3648,3649,3650,3651,3652, // Thai Tone Marks
+3631, // Thai Character Mai Ek
+3655, 3656, 3657, 3658, 3659, 3660, 3661, 3662, // Thai Vowels/Signs
+664, 665, 666, 667, 668, 669, 670, 671, // Modifier letters for raised/lowered tone etc
+2476, // ﹏ Wavy Low Line (Requested)
+9573, // ╥ Box Drawings Light Down Heavy And Horizontal Light (Requested)
+65119, // FE4F Wavy Low Line (Requested, alternative form)
+9565 // ╤ Box Drawings Light Down And Horizontal Heavy (Requested)
+],
+'Ancient/Unique':[ // Cuneiform, Hieroglyphs, Ligatures, Rare symbols, Requested singles
+64275, // ﷽ Basmala (Requested)
+65018, // ﷺ Sallallahou Alayhe Wasallam (Requested)
+74989, // 𒐫 Cuneiform Sign DAG KISIM5 E U (Requested)
+74777, // 𒈙 Cuneiform Sign GU4 AN (Requested)
+4224, // ဪ Myanmar Letter Vocalic LL (Requested)
+43493, // ꧅ Javanese Pangkon (Requested)
+43492, // ꧄ Javanese Pada Pangkat (Requested)
+11811, // ⸻ Triple Em Dash (Requested)
+1547, // ؁ Arabic Footnote Marker (Requested)
+3000, // ஹ Tamil Letter Ha (Requested)
+3064, // ௸ Tamil Sign Tamil Year (Requested)
+3061, // ௵ Tamil Number One Thousand (Requested)
+43495, // ꧟ Javanese Pada Windu (Similar to requested)
+{s:73728, e:74751}, // Cuneiform Numbers and Punctuation
+{s:74752, e:74879}, // Early Dynastic Cuneiform
+{s:77824, e:78895}, // Egyptian Hieroglyphs
+77839, // 𓀐 Egyptian Hieroglyph Man (Requested)
+78136, // 𓂸 Egyptian Hieroglyph Phallus (Requested)
+{s:68096, e:68191}, // Tangut components
+{s:68192, e:68607}, // Tangut Ideographs
+{s:127024, e:127199}, // Mahjong Tiles
+{s:127200, e:127231}, // Domino Tiles
+{s:127232, e:127247}, // Playing Cards
+{s:119040, e:119295}, // Musical Symbols
+{s:128448, e:128591}, // Symbols and Pictographs Extended-A
+{s:128896, e:128959}, // Symbols for Legacy Computing
+129648, // 🪅 Pinata
+128301, // 🧿 Nazar Amulet
+2906, // ൠ Malayalam Letter Archaic II (Requested)
+4816, // ጃ Ethiopic Syllable JA (Requested)
+3000, // ෴ Sinhala Punctuation Kunddaliya (Requested)
+4440, // ᅘ Hangul Choseong Ssangsios Initial Sound (Requested)
+3250, // ໒ Lao Digit Two (Requested)
+19895, // 䨻 Extended CJK Ideograph (Requested)
+40869, // 龘 CJK Ideograph (Requested)
+40156, // 䲜 CJK Ideograph (Requested)
+74000, //  Private Use Area (Requested)
+74001, //  Private Use Area (Requested)
+74102, //  Private Use Area (Requested)
+74103, //  Private Use Area (Requested)
+74242, //  Private Use Area (Requested)
+74302, //  Private Use Area (Requested)
+74303, //  Private Use Area (Requested)
+{s:4208, e:4255}, // Myanmar Extended-A
+{s:66304, e:66351}, // Nushu Script
+{s:67872, e:68111}, // Kana Supplement & Extended-A
+{s:68864, e:68927}, // Ideographic Symbols and Punctuation
+{s:69632, e:69711}, // Vertical Forms
+{s:69712, e:69743}, // Small Form Variants
+{s:69760, e:69823}, // CJK Compatibility Ideographs Supplement
+{s:70016, e:70095}, // Halfwidth and Fullwidth Forms (Includes fullwidth versions of requested symbols)
+{s:113664, e:113791}, // Glagolitic Supplement
+{s:113920, e:113983}, // Adlam
+{s:115712, e:115791}, // Bhaiksuki
+{s:116032, e:116127}, // Marchen
+{s:116864, e:116927}, // Zanabazar Square
+{s:117024, e:117087}, // Soyombo
+{s:118528, e:118591}, // Duployan
+{s:119296, e:119375}, // Byzantine Musical Symbols
+{s:120832, e:121087}, // Sutton SignWriting
+{s:121344, e:121519}, // Indic Siyaq Numbers
+{s:124928, e:125183}, // Ottoman Siyaq Numbers
+{s:126064, e:126143}, // Arabic Mathematical Alphabetic Symbols
+{s:126464, e:126591}, // Kaktovik Numerals
+{s:126784, e:126847}, // Cypro-Minoan
+{s:127936, e:127999}, // Ornamental Dingbats
+{s:128960, e:129007}, // Chess Symbols
+{s:129280, e:129535}, // Symbols and Pictographs Extended-B
+{s:129648, e:129791}, // Symbols and Pictographs Extended-C
+{s:131072, e:173791}, // CJK Unified Ideographs Extension B
+{s:173824, e:177983}, // CJK Unified Ideographs Extension C
+{s:177984, e:178207}, // CJK Unified Ideographs Extension D
+{s:178208, e:183983}, // CJK Unified Ideographs Extension E
+{s:183984, e:191471}, // CJK Unified Ideographs Extension F
+{s:196608, e:201551} // CJK Unified Ideographs Extension G
+],
+'Emoji':[ // Includes base emojis, modifiers, flags components, etc.
+{s:0x1F300,e:0x1F64F}, // Misc Symbols and Pictographs
+{s:0x1F680,e:0x1F6FF}, // Transport and Map Symbols
+{s:0x2600,e:0x26FF}, // Misc Symbols (Weather, UI, etc.)
+{s:0x2700,e:0x27BF}, // Dingbats
+{s:0xFE00,e:0xFE0F}, // Variation Selectors (for emoji style)
+{s:0x1F900,e:0x1F9FF}, // Supplemental Symbols and Pictographs
+{s:0x1FA70,e:0x1FAFF}, // Symbols and Pictographs Extended-A
+{s:127462,e:127487}, // Regional Indicator Symbols (for flags)
+{s:127995,e:127999}, // Emoji Modifier Fitzpatrick Types
+{s:917536,e:917631} // Tag Characters (Used in flag sequences)
+],
+'Weird':[ // Invisible, Format, Private Use, Tags, Noncharacters, Specials
+847, // Combining Grapheme Joiner
+8203, // Zero Width Space
+8204, // Zero Width Non-Joiner
+8205, // Zero Width Joiner
+8206, // Left-to-Right Mark
+8207, // Right-to-Left Mark
+8232, // Line Separator
+8233, // Paragraph Separator
+8288, // Word Joiner
+8289, // Function Application
+8290, // Invisible Times
+8291, // Invisible Separator
+8292, // Invisible Plus
+8298, // Pop Directional Formatting
+8299, // Left-to-Right Embedding
+8300, // Right-to-Left Embedding
+8301, // Pop Directional Isolate
+8302, // Left-to-Right Isolate
+8303, // Right-to-Left Isolate
+8304, // First Strong Isolate
+65279, // Zero Width No-Break Space (BOM)
+65533, // � Replacement Character
+65529, // Interlinear Annotation Anchor
+65530, // Interlinear Annotation Separator
+65531, // Interlinear Annotation Terminator
+{s:0xE000, e:0xF8FF}, // Private Use Area (Main)
+{s:0xF0000, e:0xFFFFD}, // Supplementary Private Use Area-A
+{s:0x100000, e:0x10FFFD}, // Supplementary Private Use Area-B
+65519, // Right-to-Left Override
+11744,11745,11746,11747,11748,11749, // Nyiakeng Puachue Hmong Tone Marks
+65534, 65535, // Noncharacters
+{s:0xFFF0, e:0xFFF8}, // Specials (Annotation Chars)
+{s:0xFFF9, e:0xFFFB}, // Interlinear Annotation Chars
+{s:0xFFFC, e:0xFFFD}, // Object Replacement Character, Replacement Character
+{s:917504, e:917535}, // Deprecated Tag Characters
+{s:917536, e:917631}, // Tag Characters
+{s:1114112, e:1114112} // End of Unicode range noncharacter
+]
+};
+const rn=(c,p,fav)=>{ const e=d.createElement('div'); e.className='c'; let cs = ''; try { cs = String.fromCodePoint(c); } catch { cs = '?'; } if (cs.length > 5) cs = cs.slice(0, 5) + '…'; e.innerHTML=`${cs||'?'}<span>${p?'':`U+${c.toString(16).toUpperCase().padStart(4,'0')}`}</span><button title="${fav?'Remove':'Add'} Fav">${fav?'✕':'+'}</button>`; e.onclick=(ev)=>{ if(!ev.target.closest('button')) shM(c);}; e.querySelector('button').onclick=(ev)=>{ ev.stopPropagation(); tgF(c); }; return e; };
+const fetN=async(c)=>{ try{ if(nmC[c])return nmC[c]; const r=await fetch(`https://www.compart.com/en/unicode/codepoint/U+${c.toString(16).toUpperCase()}/json`); if(!r.ok)throw'?'; const j=await r.json(); const n=j?.name?.toLowerCase()||'(no name found)'; nmC[c]=n; return n;}catch(e){nmC[c]='?';return'?';}};
+const shM=async(c)=>{ try{mcc.textContent=String.fromCodePoint(c);}catch{mcc.textContent='?';} mcd.textContent=`U+${c.toString(16).toUpperCase().padStart(4,'0')}`; mcn.textContent='Loading name...'; mcn.style.opacity='0.6'; m.classList.add('v'); clearTimeout(nmTO); nmTO=setTimeout(async()=>{const n=await fetN(c); mcn.textContent=n==='?'?'(Name lookup failed)':n; mcn.style.opacity=n==='?'?'0.4':'1';}, 150); mcb.onclick=async()=>{ try{const charToCopy=String.fromCodePoint(c); await navigator.clipboard.writeText(charToCopy); mcb.textContent='Copied!'; setTimeout(()=>mcb.textContent='Copy Character',1000);}catch(err){console.error('Copy fail',err); mcb.textContent='Copy Fail'; setTimeout(()=>mcb.textContent='Copy Character',1500);} }; };
+const clM=()=>{ clearTimeout(nmTO); m.classList.remove('v'); };
+const ldN=()=>{ if(ld||cp>maxCP||sr||ac)return; ld=true; l.className=''; l.textContent='Loading...'; l.style.display='block'; const frag=d.createDocumentFragment(); const end=Math.min(cp+bs,maxCP+1); let count=0; for(let i=cp;i<end;i++){try{String.fromCodePoint(i);frag.appendChild(rn(i,false,favs.has(i))); count++;}catch{}} g.appendChild(frag); cp+=count; ld=false; if(cp>maxCP)l.style.display='none'; };
+const db=(fn,dl=300)=>{ let t; return(...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),dl); }; };
+const sch=db(async v=>{ sr=v.trim(); ac=null; uCats(); g.innerHTML=''; cp=0; io.disconnect(); l.className=''; l.textContent='Searching...'; l.style.display='block'; if(!sr){ shA(); return;} ld=true; const r=new Set(); const lcV=v.toLowerCase(); const isCP=/^(u\+|0x)?([0-9a-fA-F]{1,6})$/i.exec(lcV); if(isCP){ const n=parseInt(isCP[2],16); if(n>=0&&n<=maxCP)try{String.fromCodePoint(n);r.add(n);}catch{}} else if(v.length === 1 || (v.length === 2 && v.codePointAt(0) > 0xFFFF)) { try{const c=v.codePointAt(0); String.fromCodePoint(c); r.add(c);}catch{}} if(v.length >= 1 && v.length<30 && (/\p{L}/u.test(v) || /\s/.test(v) || /[\p{Number}\p{Punctuation}]/u.test(v))) { try { const resp = await fetch(`https://www.compart.com/en/unicode/search/json?q=${encodeURIComponent(v)}`); if(!resp.ok) throw new Error(`HTTP ${resp.status}`); const data = await resp.json(); (data?.characters||[]).forEach(ch=>{try{String.fromCodePoint(ch.codePoint);r.add(ch.codePoint);}catch{}}); } catch(e) { console.error("Name search failed:", e); l.textContent=`Name search for '${v}' failed (Network/API issue?). Showing direct matches.`; l.className='e'; await new Promise(res=>setTimeout(res, 2500)); } } const frag=d.createDocumentFragment(); r.forEach(c=>frag.appendChild(rn(c,false,favs.has(c)))); g.appendChild(frag); ld=false; l.style.display=r.size===0?'block':'none'; l.textContent=r.size===0?'No results found.':''; });
+const rFavs=()=>{ f.innerHTML=''; if(favs.size>0){ const h2=d.createElement('h2'); h2.textContent='Favorites'; f.appendChild(h2); const frag=d.createDocumentFragment(); favs.forEach(c=>frag.appendChild(rn(c,true,true))); f.appendChild(frag); } };
+const tgF=(c)=>{ try{String.fromCodePoint(c);}catch{return;} if(favs.has(c))favs.delete(c); else favs.add(c); localStorage.setItem('f',JSON.stringify([...favs])); rFavs(); [...g.children,...f.children].forEach(el=>{ const cpStr = el.querySelector('span')?.textContent?.substring(2); if(cpStr && parseInt(cpStr, 16) === c) { const btn=el.querySelector('button'); if(btn){ btn.textContent=favs.has(c)?'✕':'+'; btn.title=favs.has(c)?'Remove Fav':'Add Fav';}} }); };
+const tgTh=()=>{ const h=d.documentElement; const ct=h.getAttribute('data-theme')==='dark'?'light':'dark'; h.setAttribute('data-theme',ct); localStorage.setItem('th',ct); th.textContent=ct==='dark'?'☀️':'🌓'; };
+const rCats=()=>{ cs.innerHTML=''; const ab=d.createElement('button'); ab.textContent='✨ All'; ab.className='cb a'; ab.onclick=shA; cs.appendChild(ab); Object.keys(CFG).forEach(k=>{ const b=d.createElement('button'); b.textContent=k; b.className='cb'; b.onclick=()=>shC(k); cs.appendChild(b); }); };
+const uCats=()=>{ [...cs.children].forEach(b=>b.classList.toggle('a', (ac===null&&b.textContent==='✨ All') || b.textContent===ac)); };
+const shA=()=>{ if(ac===null&&!sr)return; ac=null; sr=''; s.value=''; uCats(); g.innerHTML=''; cp=0; l.className=''; l.textContent='Loading...'; l.style.display='block'; io.disconnect(); io.observe(l); ldN(); };
+const shC=(k)=>{ if(ac===k)return; ac=k; sr=''; s.value=''; uCats(); g.innerHTML=''; io.disconnect(); l.style.display='none'; const frag=d.createDocumentFragment(); const items=CFG[k]; ld=true; items.forEach(it=>{ if(typeof it==='number'){ if(it>=0&&it<=maxCP)try{String.fromCodePoint(it);frag.appendChild(rn(it,false,favs.has(it)));}catch{}} else if(it.s!==undefined&&it.e!==undefined){ for(let i=it.s;i<=it.e;i++){if(i>=0&&i<=maxCP)try{String.fromCodePoint(i);frag.appendChild(rn(i,false,favs.has(i)));}catch{}}} }); g.appendChild(frag); ld=false; window.scrollTo(0,0); };
+s.oninput=()=>sch(s.value); mcl.onclick=clM; m.onclick=(e)=>{if(e.target===m)clM();}; d.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&m.classList.contains('v'))clM();}); th.onclick=tgTh; io=new IntersectionObserver(([e])=>{if(e.isIntersecting&&!ld&&!sr&&ac===null)ldN();},{rootMargin:"400px"}); io.observe(l);
+const pt=localStorage.getItem('th'); if(pt){d.documentElement.setAttribute('data-theme',pt); th.textContent=pt==='dark'?'☀️':'🌓';}else if(window.matchMedia?.('(prefers-color-scheme: light)')?.matches)tgTh();
+rFavs(); rCats(); ldN();
+</script>
+</body>
+</html>
